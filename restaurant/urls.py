@@ -1,8 +1,9 @@
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.views.generic import TemplateView
-from rest_framework import routers
+from rest_framework import routers, permissions
 # para Swagger
-from rest_framework.schemas import get_schema_view
+from drf_yasg import openapi
+from drf_yasg.views import get_schema_view
 # ApiViews
 from restaurant.apiviews.menuApiviews import MenuView
 from restaurant.apiviews.menuApiviews import MenuItemView
@@ -52,10 +53,18 @@ router.register(r'meseros', MeseroView)
 router.register(r'clientes', ClienteView)
 
 # Swagger Docs
-swaggerUi_schema = get_schema_view(
-    title='SwaggerUi Api PichiFish Store',
-    description='Guide for the API Task',
-    version='v1.0.0',
+# Creando esquema de configuracion para la auto doc de swagger
+schema_view = get_schema_view(
+    openapi.Info(
+        title="Restaurant API",
+        default_version='v1',
+        description="Practice API that simuling an restaurant",
+        terms_of_service="https://www.example.com/terms/",
+        contact=openapi.Contact(email="brochegomezf@gmail.com"),
+        license=openapi.License(name="MIT License"),
+    ),
+    public=True,
+    permission_classes=(permissions.AllowAny,),
 )
 
 urlpatterns = [
@@ -65,8 +74,6 @@ urlpatterns = [
     path('schema/', swaggerUi_schema, name="schema-apiTask"),
 
     # End Point para visitar la Documentacion de la Api
-    path('docs/', TemplateView.as_view(
-        template_name='docs.html',
-        extra_context={'schema_url': 'schema-apiTask'}
-    ), name='swagger-ui'),
+    re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    re_path(r'docs/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 ]
